@@ -3,7 +3,8 @@
 
 local MAX_SLOTS = 6
 local CACHE_TIME = 1
-local SELECT_SOUND = "Player.WeaponSelectionMoveSlot"
+local MOVE_SOUND = "Player.WeaponSelectionMoveSlot"
+local SELECT_SOUND = "Player.WeaponSelected"
 
 --[[------------------------------------]]--
 -- Instance variables
@@ -163,7 +164,7 @@ hook.Add("PlayerBindPress", "GS-Weapon Selector", function(pPlayer, sBind, bPres
 					end
 					
 					flSelectTime = RealTime()
-					pPlayer:EmitSound(SELECT_SOUND)
+					pPlayer:EmitSound(MOVE_SOUND)
 					
 					return true
 				end
@@ -191,7 +192,7 @@ hook.Add("PlayerBindPress", "GS-Weapon Selector", function(pPlayer, sBind, bPres
 		end
 		
 		flSelectTime = RealTime()
-		pPlayer:EmitSound(SELECT_SOUND)
+		pPlayer:EmitSound(MOVE_SOUND)
 		
 		return true
 	end
@@ -240,7 +241,7 @@ hook.Add("PlayerBindPress", "GS-Weapon Selector", function(pPlayer, sBind, bPres
 					end
 					
 					flSelectTime = RealTime()
-					pPlayer:EmitSound(SELECT_SOUND)
+					pPlayer:EmitSound(MOVE_SOUND)
 					
 					return true
 				end
@@ -264,7 +265,7 @@ hook.Add("PlayerBindPress", "GS-Weapon Selector", function(pPlayer, sBind, bPres
 		end
 		
 		flSelectTime = RealTime()
-		pPlayer:EmitSound(SELECT_SOUND)
+		pPlayer:EmitSound(MOVE_SOUND)
 
 		return true
 	end
@@ -285,7 +286,7 @@ hook.Add("PlayerBindPress", "GS-Weapon Selector", function(pPlayer, sBind, bPres
 		
 		-- Play a sound even if there aren't any weapons in that slot for "haptic" (really auditory) feedback
 		if (iWeaponCount == 0) then
-			pPlayer:EmitSound(SELECT_SOUND)
+			pPlayer:EmitSound(MOVE_SOUND)
 			
 			return true
 		end
@@ -313,7 +314,7 @@ hook.Add("PlayerBindPress", "GS-Weapon Selector", function(pPlayer, sBind, bPres
 				end
 				
 				flSelectTime = RealTime()
-				pPlayer:EmitSound(SELECT_SOUND)
+				pPlayer:EmitSound(MOVE_SOUND)
 			end
 			
 			return true
