@@ -335,8 +335,8 @@ hook.Add("PlayerBindPress", "GS-Weapon Selector", function(pPlayer, sBind, bPres
 			end
 			
 			-- Hide the selection
-			iCurSlot = 0
 			local pWeapon = tCache[iCurSlot][iCurPos]
+			iCurSlot = 0
 			
 			-- If the weapon still exists and isn't the player's active weapon
 			if (pWeapon:IsValid() and pWeapon ~= pPlayer:GetActiveWeapon()) then
