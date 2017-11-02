@@ -27,13 +27,15 @@ end
 
 --[[ Implementation ]]--
 
-local cl_drawhud = GetConVar("cl_drawhud")
-
 -- Initialize tables with slot number
 for i = 1, MAX_SLOTS do
 	tCache[i] = {}
 	tCacheLength[i] = 0
 end
+
+local pairs = pairs
+local RealTime = RealTime
+local LocalPlayer = LocalPlayer
 
 local function PrecacheWeps()
 	-- Reset all table values
@@ -79,6 +81,8 @@ local function PrecacheWeps()
 	end
 end
 
+local cl_drawhud = GetConVar("cl_drawhud")
+
 hook.Add("HUDPaint", "GS_WeaponSelector", function()
 	if (iCurSlot == 0 or not cl_drawhud:GetBool()) then
 		return
@@ -99,14 +103,21 @@ hook.Add("HUDPaint", "GS_WeaponSelector", function()
 	end
 end)
 
+local tonumber = tonumber
+local string_lower = string.lower
+
 hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPressed)
 	if (not pPlayer:Alive() or pPlayer:InVehicle() and not pPlayer:GetAllowWeaponsInVehicle()) then
 		return
 	end
 
+	sBind = string_lower(sBind)
+
 	-- Close the menu
 	if (sBind == "cancelselect") then
-		iCurSlot = 0
+		if (bPressed) then
+			iCurSlot = 0
+		end
 
 		return true
 	end
@@ -123,19 +134,16 @@ hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 			return true
 		end
 
-		local bLoop = false
+		local bLoop = iCurSlot == 0
 
-		if (iCurSlot == 0) then
+		if (bLoop) then
 			local pActiveWeapon = pPlayer:GetActiveWeapon()
 
 			if (pActiveWeapon:IsValid()) then
 				local iSlot = pActiveWeapon:GetSlot() + 1
 				local tSlotCache = tCache[iSlot]
 
-				if (tSlotCache[1] == pActiveWeapon) then
-					iCurSlot = iSlot
-					bLoop = true
-				else
+				if (tSlotCache[1] ~= pActiveWeapon) then
 					iCurSlot = iSlot
 					iCurPos = 1
 
@@ -152,8 +160,8 @@ hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 
 					return true
 				end
-			else
-				bLoop = true
+
+				iCurSlot = iSlot
 			end
 		end
 
@@ -179,7 +187,6 @@ hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 
 	-- Move to the weapon after the current
 	if (sBind == "invnext") then
-		-- Don't use the bind unless it was activated
 		if (not bPressed) then
 			return true
 		end
@@ -192,10 +199,10 @@ hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 		end
 
 		-- Lua's goto can't jump between child scopes
-		local bLoop = false
+		local bLoop = iCurSlot == 0
 
 		-- Weapon selection isn't currently open, move based on the active weapon's position
-		if (iCurSlot == 0) then
+		if (bLoop) then
 			local pActiveWeapon = pPlayer:GetActiveWeapon()
 
 			if (pActiveWeapon:IsValid()) then
@@ -203,12 +210,7 @@ hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 				local iLen = tCacheLength[iSlot]
 				local tSlotCache = tCache[iSlot]
 
-				-- At the end of a slot, move to the next one
-				if (tSlotCache[iLen] == pActiveWeapon) then
-					iCurSlot = iSlot
-					bLoop = true
-				-- Bump up a position from the active weapon
-				else
+				if (tSlotCache[iLen] ~= pActiveWeapon) then
 					iCurSlot = iSlot
 					iCurPos = 1
 
@@ -225,9 +227,9 @@ hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 
 					return true
 				end
-			else
-				-- NULL weapon will just start at the first available slot/position
-				bLoop = true
+
+				-- At the end of a slot, move to the next one
+				iCurSlot = iSlot
 			end
 		end
 
@@ -304,10 +306,6 @@ hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 	-- If the weapon selection is currently open
 	if (iCurSlot ~= 0) then
 		if (sBind == "+attack") then
-			if (not bPressed) then
-				return true
-			end
-
 			-- Hide the selection
 			local pWeapon = tCache[iCurSlot][iCurPos]
 			iCurSlot = 0
