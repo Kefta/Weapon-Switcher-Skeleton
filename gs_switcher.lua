@@ -34,8 +34,11 @@ for i = 1, MAX_SLOTS do
 end
 
 local pairs = pairs
+local tonumber = tonumber
 local RealTime = RealTime
 local LocalPlayer = LocalPlayer
+local string_lower = string.lower
+local input_SelectWeapon = input.SelectWeapon
 
 local function PrecacheWeps()
 	-- Reset all table values
@@ -91,7 +94,7 @@ hook.Add("HUDPaint", "GS_WeaponSelector", function()
 	local pPlayer = LocalPlayer()
 
 	-- Don't draw in vehicles unless weapons are allowed to be used
-	-- Also, don't draw while dead!
+	-- Or while dead!
 	if (pPlayer:IsValid() and pPlayer:Alive() and (not pPlayer:InVehicle() or pPlayer:GetAllowWeaponsInVehicle())) then
 		if (flNextPrecache <= RealTime()) then
 			PrecacheWeps()
@@ -102,9 +105,6 @@ hook.Add("HUDPaint", "GS_WeaponSelector", function()
 		iCurSlot = 0
 	end
 end)
-
-local tonumber = tonumber
-local string_lower = string.lower
 
 hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPressed)
 	if (not pPlayer:Alive() or pPlayer:InVehicle() and not pPlayer:GetAllowWeaponsInVehicle()) then
@@ -312,14 +312,7 @@ hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 
 			-- If the weapon still exists and isn't the player's active weapon
 			if (pWeapon:IsValid() and pWeapon ~= pPlayer:GetActiveWeapon()) then
-				-- SelectWeapon might not work the first time; keep trying
-				hook.Add("CreateMove", "GS_WeaponSelector", function(cmd)
-					if (pWeapon:IsValid() and pPlayer:IsValid() and pWeapon ~= pPlayer:GetActiveWeapon()) then
-						cmd:SelectWeapon(pWeapon)
-					else
-						hook.Remove("CreateMove", "GS_WeaponSelector")
-					end
-				end)
+				input_SelectWeapon(pWeapon)
 			end
 
 			flSelectTime = RealTime()
