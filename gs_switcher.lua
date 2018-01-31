@@ -22,6 +22,7 @@ local tCacheLength = {}
 --[[ Weapon switcher ]]--
 
 local function DrawWeaponHUD()
+	-- Draw here!
 end
 
 --[[ Implementation ]]--
