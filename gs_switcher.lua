@@ -22,7 +22,6 @@ local tCacheLength = {}
 --[[ Weapon switcher ]]--
 
 local function DrawWeaponHUD()
-	-- Draw here!
 end
 
 --[[ Implementation ]]--
@@ -36,9 +35,17 @@ end
 local pairs = pairs
 local tonumber = tonumber
 local RealTime = RealTime
+local hook_Add = hook.Add
 local LocalPlayer = LocalPlayer
 local string_lower = string.lower
 local input_SelectWeapon = input.SelectWeapon
+
+-- Hide the default weapon selection
+hook_Add("HUDShouldDraw", "GS_WeaponSelector", function(sName)
+	if (sName == "CHudWeaponSelection") then
+		return false
+	end
+end)
 
 local function PrecacheWeps()
 	-- Reset all table values
@@ -86,7 +93,7 @@ end
 
 local cl_drawhud = GetConVar("cl_drawhud")
 
-hook.Add("HUDPaint", "GS_WeaponSelector", function()
+hook_Add("HUDPaint", "GS_WeaponSelector", function()
 	if (iCurSlot == 0 or not cl_drawhud:GetBool()) then
 		return
 	end
@@ -106,7 +113,7 @@ hook.Add("HUDPaint", "GS_WeaponSelector", function()
 	end
 end)
 
-hook.Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPressed)
+hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPressed)
 	if (not pPlayer:Alive() or pPlayer:InVehicle() and not pPlayer:GetAllowWeaponsInVehicle()) then
 		return
 	end
