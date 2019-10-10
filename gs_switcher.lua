@@ -120,6 +120,18 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 	end
 
 	sBind = string_lower(sBind)
+		
+	-- Last weapon switch
+	if (sBind == "lastinv") then
+		if (bPressed) then
+			local pLastWeapon = pPlayer:GetInternalVariable("m_hLastWeapon")
+			if IsValid(pLastWeapon) then
+				input_SelectWeapon(pLastWeapon)
+			end
+		end
+
+		return true
+	end
 
 	-- Close the menu
 	if (sBind == "cancelselect") then
