@@ -125,7 +125,8 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 	if (sBind == "lastinv") then
 		if (bPressed) then
 			local pLastWeapon = pPlayer:GetInternalVariable("m_hLastWeapon")
-			if IsValid(pLastWeapon) then
+
+			if (pLastWeapon ~= nil and pLastWeapon:IsWeapon()) then
 				input_SelectWeapon(pLastWeapon)
 			end
 		end
