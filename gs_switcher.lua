@@ -1,17 +1,18 @@
 --[[ Config ]]--
 
-local MAX_SLOTS = 6
-local CACHE_TIME = 1
-local MOVE_SOUND = "Player.WeaponSelectionMoveSlot"
-local SELECT_SOUND = "Player.WeaponSelected"
+local MAX_SLOTS = 6	 -- Max number of weapon slots. Expects Integer [0, inf)
+local CACHE_TIME = 1 -- Time in seconds between updating the weapon cache. RealTime is used for comparisons. Expects Decimal [0, inf]. 0 = update every frame, inf = never update
+local MOVE_SOUND = "Player.WeaponSelectionMoveSlot" -- Sound to play when the player moves between weapon slots. Expects String soundscape or sound file path. "" = no sound
+local SELECT_SOUND = "Player.WeaponSelected" -- Sound to play when the player selects a weapon. Expects String soundscape or sound file path. "" = no sound
+local CANCEL_SOUND = "" -- Sound to play when the player cancels the weapon selection. Expects String soundscape or sound file path. "" = no sound
 
---[[ Instance variables ]]--
+--[[ Instance variables - do not edit ]]--
 
-local iCurSlot = 0 -- Currently selected slot. 0 = no selection
-local iCurPos = 1 -- Current position in that slot
-local flNextPrecache = 0 -- Time until next precache
-local flSelectTime = 0 -- Time the weapon selection changed slot/visibility states. Can be used to close the weapon selector after a certain amount of idle time
-local iWeaponCount = 0 -- Total number of weapons on the player
+local iCurSlot = 0 -- Currently selected slot. Will be an Integer [0, MAX_SLOTS]. 0 = no selection
+local iCurPos = 1 -- Current position in that slot. Will be an Integer [0, inf)
+local flNextPrecache = 0 -- Time until next precache. Will be a Decimal [0, inf) representing a RealTime
+local flSelectTime = 0 -- Time the weapon selection changed slot/visibility states. Can be used to close the weapon selector after a certain amount of idle time. Will be a Decimal [0, inf) representing a RealTime
+local iWeaponCount = 0 -- Total number of weapons on the player. Will be an Integer [0, inf)
 
 -- Weapon cache; table of tables. tCache[Slot + 1] contains a table containing that slot's weapons. Table's length is tCacheLength[Slot + 1]
 local tCache = {}
@@ -21,11 +22,20 @@ local tCacheLength = {}
 
 --[[ Weapon switcher ]]--
 
+--[[ Guarentees when this function is called:
+	- cl_drawhud != 0
+	- uCurSlot >= 1
+	- iCurPos >= 1
+	- iWeaponCount >= 1
+	- LocalPlayer():IsValid()
+	- LocalPlayer():Alive()
+	- not LocalPlayer():InVehicle() or LocalPlayer():GetAllowWeaponsInVehicle()
+]]
 local function DrawWeaponHUD()
 	-- Draw here!
 end
 
---[[ Implementation ]]--
+--[[ Implementation - do not edit ]]--
 
 -- Initialize tables with slot number
 for i = 1, MAX_SLOTS do
@@ -37,6 +47,7 @@ local pairs = pairs
 local tonumber = tonumber
 local RealTime = RealTime
 local hook_Add = hook.Add
+local math_floor = math.floor
 local LocalPlayer = LocalPlayer
 local string_lower = string.lower
 local input_SelectWeapon = input.SelectWeapon
@@ -60,21 +71,27 @@ local function PrecacheWeps()
 
 	-- Update the cache time
 	flNextPrecache = RealTime() + CACHE_TIME
-	iWeaponCount = 0
 
-	-- Discontinuous table
-	for _, pWeapon in pairs(LocalPlayer():GetWeapons()) do
-		iWeaponCount = iWeaponCount + 1
+	local tWeapons = LocalPlayer():GetWeapons()
+	iWeaponCount = #tWeapons
 
-		-- Weapon slots start internally at "0"
-		-- Here, we will start at "1" to match the slot binds
-		local iSlot = pWeapon:GetSlot() + 1
+	if (iWeaponCount == 0) then
+		iCurSlot = 0
+		iCurPos = 1
+	else
+		for i = 1, iWeaponCount do
+			local pWeapon = tWeapons[i]
 
-		if (iSlot <= MAX_SLOTS) then
-			-- Cache number of weapons in each slot
-			local iLen = tCacheLength[iSlot] + 1
-			tCacheLength[iSlot] = iLen
-			tCache[iSlot][iLen] = pWeapon
+			-- Weapon slots start internally at 0
+			-- Here, we will start at 1 to match the slot binds
+			local iSlot = pWeapon:GetSlot() + 1
+
+			if (iSlot <= MAX_SLOTS) then
+				-- Cache number of weapons in each slot
+				local iLen = tCacheLength[iSlot] + 1
+				tCacheLength[iSlot] = iLen
+				tCache[iSlot][iLen] = pWeapon
+			end
 		end
 	end
 
@@ -82,19 +99,40 @@ local function PrecacheWeps()
 	if (iCurSlot ~= 0) then
 		local iLen = tCacheLength[iCurSlot]
 
-		if (iLen < iCurPos) then
-			if (iLen == 0) then
-				iCurSlot = 0
-			else
-				iCurPos = iLen
-			end
+		if (iLen == 0) then
+			iCurSlot = 0
+			iCurPos = 1
+		elseif (iLen < iCurPos) then
+			iCurPos = iLen
 		end
+	end
+end
+
+local function CheckBounds()
+	if (iCurSlot < 0 or iCurSlot > MAX_SLOTS) then
+		iCurSlot = 0
+	else
+		iCurSlot = math_floor(iCurSlot)
+	end
+
+	if (iCurPos < 1) then
+		iCurPos = 1
+	else
+		iCurPos = math_floor(iCurPos)
+	end
+
+	if (iWeaponCount < 0) then
+		iWeaponCount = 0
+	else
+		iWeaponCount = math_floor(iWeaponCount)
 	end
 end
 
 local cl_drawhud = GetConVar("cl_drawhud")
 
 hook_Add("HUDPaint", "GS_WeaponSelector", function()
+	CheckBounds()
+
 	if (iCurSlot == 0 or not cl_drawhud:GetBool()) then
 		return
 	end
@@ -108,9 +146,12 @@ hook_Add("HUDPaint", "GS_WeaponSelector", function()
 			PrecacheWeps()
 		end
 
-		DrawWeaponHUD()
+		if (iCurSlot ~= 0) then
+			DrawWeaponHUD()
+		end
 	else
 		iCurSlot = 0
+		iCurPos = 1
 	end
 end)
 
@@ -119,8 +160,9 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 		return
 	end
 
+	CheckBounds()
 	sBind = string_lower(sBind)
-		
+
 	-- Last weapon switch
 	if (sBind == "lastinv") then
 		if (bPressed) then
@@ -136,8 +178,12 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 
 	-- Close the menu
 	if (sBind == "cancelselect") then
-		if (bPressed) then
+		if (bPressed and iCurSlot ~= 0) then
 			iCurSlot = 0
+			iCurPos = 1
+
+			flSelectTime = RealTime()
+			pPlayer:EmitSound(CANCEL_SOUND)
 		end
 
 		return true
@@ -330,6 +376,7 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 			-- Hide the selection
 			local pWeapon = tCache[iCurSlot][iCurPos]
 			iCurSlot = 0
+			iCurPos = 1
 
 			-- If the weapon still exists and isn't the player's active weapon
 			if (pWeapon:IsValid() and pWeapon ~= pPlayer:GetActiveWeapon()) then
@@ -345,7 +392,10 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 		-- Another shortcut for closing the selection
 		if (sBind == "+attack2") then
 			flSelectTime = RealTime()
+			pPlayer:EmitSound(CANCEL_SOUND)
+
 			iCurSlot = 0
+			iCurPos = 1
 
 			return true
 		end
