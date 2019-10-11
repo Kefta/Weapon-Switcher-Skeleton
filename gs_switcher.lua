@@ -14,18 +14,18 @@ local flNextPrecache = 0 -- Time until next precache. Will be a Decimal [0, inf)
 local flSelectTime = 0 -- Time the weapon selection changed slot/visibility states. Can be used to close the weapon selector after a certain amount of idle time. Will be a Decimal [0, inf) representing a RealTime
 local iWeaponCount = 0 -- Total number of weapons on the player. Will be an Integer [0, inf)
 
--- Weapon cache; table of tables. tCache[Slot + 1] contains a table containing that slot's weapons. Table's length is tCacheLength[Slot + 1]
+-- Weapon cache; table of tables. tCache[Weapon:GetSlot() + 1] or tCacheLength[iCurSlot] contains a table containing that slot's weapons. The table's length is tCacheLength[Slot + 1]
 local tCache = {}
 
--- Weapon cache length. tCacheLength[Slot + 1] will contain the number of weapons that slot has
+-- Weapon cache length. tCacheLength[Weapon:GetSlot() + 1] or tCacheLength[iCurSlot] will contain the number of weapons that slot has
 local tCacheLength = {}
 
 --[[ Weapon switcher ]]--
 
 --[[ Guarentees when this function is called:
 	- cl_drawhud != 0
-	- uCurSlot >= 1
-	- iCurPos >= 1
+	- iCurSlot >= 1
+	- 1 <= iCurPos <= tCacheLength[iCurSlot]
 	- iWeaponCount >= 1
 	- LocalPlayer():IsValid()
 	- LocalPlayer():Alive()
@@ -102,7 +102,7 @@ local function PrecacheWeps()
 		if (iLen == 0) then
 			iCurSlot = 0
 			iCurPos = 1
-		elseif (iLen < iCurPos) then
+		elseif (iCurPos > iLen) then
 			iCurPos = iLen
 		end
 	end
@@ -131,9 +131,13 @@ end
 local cl_drawhud = GetConVar("cl_drawhud")
 
 hook_Add("HUDPaint", "GS_WeaponSelector", function()
+	if (not cl_drawhud:GetBool()) then
+		return
+	end
+
 	CheckBounds()
 
-	if (iCurSlot == 0 or not cl_drawhud:GetBool()) then
+	if (iCurSlot == 0) then
 		return
 	end
 
@@ -160,7 +164,6 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 		return
 	end
 
-	CheckBounds()
 	sBind = string_lower(sBind)
 
 	-- Last weapon switch
@@ -195,6 +198,7 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 			return true
 		end
 
+		CheckBounds()
 		PrecacheWeps()
 
 		if (iWeaponCount == 0) then
@@ -258,6 +262,7 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 			return true
 		end
 
+		CheckBounds()
 		PrecacheWeps()
 
 		-- Block the action if there aren't any weapons available
@@ -337,6 +342,7 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 			return true
 		end
 
+		CheckBounds()
 		PrecacheWeps()
 
 		-- Play a sound even if there aren't any weapons in that slot for "haptic" (really auditory) feedback
