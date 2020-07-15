@@ -43,7 +43,6 @@ for i = 1, MAX_SLOTS do
 	tCacheLength[i] = 0
 end
 
-local pairs = pairs
 local tonumber = tonumber
 local RealTime = RealTime
 local hook_Add = hook.Add
