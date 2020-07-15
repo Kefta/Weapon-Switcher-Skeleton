@@ -47,6 +47,7 @@ local tonumber = tonumber
 local RealTime = RealTime
 local hook_Add = hook.Add
 local math_floor = math.floor
+local string_sub = string.sub
 local LocalPlayer = LocalPlayer
 local string_lower = string.lower
 local input_SelectWeapon = input.SelectWeapon
@@ -328,8 +329,8 @@ hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPress
 	end
 
 	-- Keys 1-6
-	if (sBind:sub(1, 4) == "slot") then
-		local iSlot = tonumber(sBind:sub(5))
+	if (string_sub(sBind, 1, 4) == "slot") then
+		local iSlot = tonumber(string_sub(sBind, 5))
 
 		-- If the command is slot#, use it for the weapon HUD
 		-- Otherwise, let it pass through to prevent false positives
