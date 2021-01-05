@@ -50,6 +50,7 @@ local math_floor = math.floor
 local string_sub = string.sub
 local LocalPlayer = LocalPlayer
 local string_lower = string.lower
+local input_IsMouseDown = input.IsMouseDown
 local input_SelectWeapon = input.SelectWeapon
 
 -- Hide the default weapon selection
@@ -160,7 +161,7 @@ hook_Add("HUDPaint", "GS_WeaponSelector", function()
 end)
 
 hook_Add("PlayerBindPress", "GS_WeaponSelector", function(pPlayer, sBind, bPressed)
-	if (not pPlayer:Alive() or pPlayer:InVehicle() and not pPlayer:GetAllowWeaponsInVehicle()) then
+	if (not pPlayer:Alive() or input_IsMouseDown(MOUSE_LEFT) or pPlayer:InVehicle() and not pPlayer:GetAllowWeaponsInVehicle()) then
 		return
 	end
 
